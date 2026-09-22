@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CineFind — Find your next watch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #14110F;
+    --surface: #1D1815;
+    --surface-raised: #241E1A;
+    --line: #352C25;
+    --gold: #E8B34C;
+    --gold-dim: #C9974A;
+    --velvet: #9A2B2B;
+    --velvet-bright: #C23B3B;
+    --text: #F5EFE6;
+    --text-muted: #A69C8E;
+    --text-faint: #6E6459;
+    --radius: 4px;
+    --shadow: 0 18px 40px rgba(0,0,0,.45);
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin:0;
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse at top, rgba(232,179,76,0.06), transparent 55%),
+      radial-gradient(ellipse at bottom, rgba(154,43,43,0.08), transparent 60%);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, sans-serif;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  a{ color: inherit; }
+
+  .filmstrip{
+    height: 22px;
+    width: 100%;
+    background-color: #0B0908;
+    background-image: repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 14px,
+      #0B0908 14px,
+      #0B0908 28px
+    );
+    position: relative;
+    overflow: hidden;
+  }
+  .filmstrip::before, .filmstrip::after{
+    content:"";
+    position:absolute;
+    top:0; bottom:0;
+    left:0; right:0;
+    background-image: repeating-linear-gradient(
+      90deg,
+      var(--bg) 0,
+      var(--bg) 9px,
+      transparent 9px,
+      transparent 28px
+    );
+    background-position: 6px 0;
+  }
+  .filmstrip::after{ background-position: 6px 100%; }
+
+  header{
+    padding: 64px 24px 40px;
+    text-align: center;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    color: var(--gold-dim);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    margin-bottom: 18px;
+  }
+  .eyebrow svg{ width:16px; height:16px; }
+
+  h1.brand{
+    font-family: 'Playfair Display', serif;
+    font-weight: 800;
+    font-size: clamp(2.6rem, 7vw, 4.4rem);
+    margin: 0 0 14px;
+    letter-spacing: 0.01em;
+    background: linear-gradient(180deg, #FBE3AE 0%, var(--gold) 55%, var(--gold-dim) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 2px 24px rgba(232,179,76,0.25);
+  }
+  header p.tagline{
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .search-wrap{
+    max-width: 640px;
+    margin: 36px auto 0;
+    padding: 0 24px;
+  }
+  form.search{
+    display:flex;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 8px;
+    box-shadow: var(--shadow);
+  }
+  form.search input[type="text"]{
+    flex:1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    padding: 12px 14px;
+  }
+  form.search input::placeholder{ color: var(--text-faint); }
+
+  .ticket-btn{
+    background: var(--velvet);
+    color: #FCEFE3;
+    border: none;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 12px 22px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    position: relative;
+    transition: background .15s ease, transform .1s ease;
+  }
+  .ticket-btn:hover{ background: var(--velvet-bright); }
+  .ticket-btn:active{ transform: scale(0.98); }
+  .ticket-btn:disabled{ opacity:.55; cursor: default; }
+
+  .filters{
+    display:flex;
+    gap: 18px;
+    justify-content:center;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .filters label{
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    display:flex;
+    align-items:center;
+    gap: 6px;
+  }
+  .filters select, .filters input[type="number"]{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    padding: 5px 8px;
+    border-radius: var(--radius);
+  }
+
+  .key-setup{
+    max-width: 640px;
+    margin: 18px auto 0;
+    padding: 0 24px;
+    font-size: 0.82rem;
+    color: var(--text-faint);
+    text-align: center;
+  }
+  .key-setup a{ color: var(--gold-dim); text-decoration: underline; text-underline-offset: 2px; }
+  .key-setup button{
+    background: none;
+    border: none;
+    color: var(--gold-dim);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    font-size: inherit;
+    font-family: inherit;
+    cursor: pointer;
+    padding: 0;
+  }
+  .key-form{
+    display:none;
+    gap: 8px;
+    max-width: 420px;
+    margin: 10px auto 0;
+  }
+  .key-form.open{ display:flex; }
+  .key-form input{
+    flex:1;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 8px 10px;
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+  }
+  .key-form button{
+    background: var(--gold);
+    color: #241A08;
+    border: none;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 0.85rem;
+    text-decoration: none;
+  }
+
+  .status{
+    max-width: 640px;
+    margin: 40px auto;
+    padding: 0 24px;
+    text-align:center;
+    color: var(--text-muted);
+  }
+  .status .icon{ font-size: 2rem; margin-bottom: 10px; display:block; }
+  .status.error{ color: #E9A9A0; }
+
+  .spinner{
+    width: 34px; height:34px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    border: 3px solid var(--line);
+    border-top-color: var(--gold);
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+
+  main{
+    max-width: 1180px;
+    margin: 30px auto 90px;
+    padding: 0 24px;
+  }
+  .results-meta{
+    color: var(--text-faint);
+    font-size: 0.85rem;
+    margin: 0 0 18px;
+    letter-spacing: 0.02em;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 22px;
+  }
+
+  .card{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow:hidden;
+    cursor:pointer;
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    display:flex;
+    flex-direction:column;
+  }
+  .card:hover{
+    transform: translateY(-4px);
+    box-shadow: var(--shadow);
+    border-color: var(--gold-dim);
+  }
+  .card:focus-visible{
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+  .poster-wrap{
+    position:relative;
+    aspect-ratio: 2/3;
+    background: var(--surface-raised);
+    overflow:hidden;
+  }
+  .poster-wrap img{
+    width:100%; height:100%;
+    object-fit: cover;
+    display:block;
+  }
+  .poster-wrap .no-poster{
+    width:100%; height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color: var(--text-faint);
+    font-size: 0.75rem;
+    text-align:center;
+    padding: 12px;
+  }
+  .sprockets{
+    position:absolute;
+    top:0; left:0; right:0;
+    height: 10px;
+    background-image: repeating-linear-gradient(
+      90deg, rgba(0,0,0,.55) 0, rgba(0,0,0,.55) 5px, transparent 5px, transparent 14px
+    );
+    opacity:.5;
+  }
+  .card-body{
+    padding: 12px 14px 14px;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .card-title{
+    font-weight: 600;
+    font-size: 0.92rem;
+    line-height:1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow:hidden;
+  }
+  .card-meta{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size: 0.78rem;
+    color: var(--text-faint);
+    margin-top: auto;
+    padding-top: 6px;
+  }
+  .badge{
+    display:inline-block;
+    background: rgba(232,179,76,0.12);
+    color: var(--gold);
+    border: 1px solid rgba(232,179,76,0.3);
+    font-size: 0.68rem;
+    padding: 2px 7px;
+    border-radius: 20px;
+    text-transform: capitalize;
+  }
+
+  /* ---------- Modal ---------- */
+  .modal-backdrop{
+    position:fixed; inset:0;
+    background: rgba(9,7,6,0.78);
+    backdrop-filter: blur(3px);
+    display:none;
+    align-items:flex-start;
+    justify-content:center;
+    padding: 5vh 20px;
+    overflow-y:auto;
+    z-index: 100;
+  }
+  .modal-backdrop.open{ display:flex; }
+
+  .modal{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    max-width: 760px;
+    width:100%;
+    box-shadow: 0 30px 70px rgba(0,0,0,.6);
+    position:relative;
+    overflow:hidden;
+  }
+  .modal-close{
+    position:absolute;
+    top: 14px; right:14px;
+    background: rgba(0,0,0,.4);
+    border: 1px solid var(--line);
+    color: var(--text);
+    width:34px; height:34px;
+    border-radius:50%;
+    cursor:pointer;
+    font-size: 1.1rem;
+    line-height:1;
+    z-index: 5;
+  }
+  .modal-inner{
+    display:grid;
+    grid-template-columns: 220px 1fr;
+    gap: 0;
+  }
+  @media (max-width: 560px){
+    .modal-inner{ grid-template-columns: 1fr; }
+    .modal-poster{ aspect-ratio: 16/9; }
+  }
+  .modal-poster{
+    background: var(--surface-raised);
+    aspect-ratio: 2/3;
+  }
+  .modal-poster img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .modal-content{
+    padding: 30px 28px;
+  }
+  .modal-content h2{
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    margin: 0 0 6px;
+    color: var(--gold);
+    padding-right: 30px;
+  }
+  .modal-sub{
+    color: var(--text-faint);
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+  }
+  .modal-plot{
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    margin-bottom: 18px;
+  }
+  .modal-facts{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 20px;
+    font-size: 0.85rem;
+  }
+  .modal-facts dt{
+    color: var(--text-faint);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
+  }
+  .modal-facts dd{ margin:0; color: var(--text); }
+  .ratings-row{
+    display:flex;
+    gap: 10px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+  }
+  .rating-chip{
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 8px 12px;
+    font-size: 0.78rem;
+  }
+  .rating-chip .src{ color: var(--text-faint); display:block; font-size:0.68rem; margin-bottom:2px; }
+  .rating-chip .val{ color: var(--gold); font-weight:600; }
+
+  footer{
+    text-align:center;
+    color: var(--text-faint);
+    font-size: 0.78rem;
+    padding: 30px 24px 50px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="filmstrip"></div>
+
+  <header>
+    <div class="eyebrow">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="6" width="20" height="12" rx="1"/><path d="M7 6v12M17 6v12M2 9h5M2 15h5M17 9h5M17 15h5"/></svg>
+      now screening
+    </div>
+    <h1 class="brand">CineFind</h1>
+    <p class="tagline">Search decades of film in one line. Type a title, pick your seat.</p>
+  </header>
+
+  <div class="search-wrap">
+    <form class="search" id="searchForm">
+      <input type="text" id="searchInput" placeholder="Search a movie, show, or episode…" autocomplete="off" autofocus>
+      <button type="submit" class="ticket-btn" id="searchBtn">Search</button>
+    </form>
+    <div class="filters">
+      <label>Type
+        <select id="typeFilter">
+          <option value="">Any</option>
+          <option value="movie">Movie</option>
+          <option value="series">Series</option>
+          <option value="episode">Episode</option>
+        </select>
+      </label>
+      <label>Year
+        <input type="number" id="yearFilter" placeholder="e.g. 1999" min="1888" max="2026" style="width:90px">
+      </label>
+    </div>
+  </div>
+
+  <div class="key-setup" id="keySetup">
+    <span id="keyStatusText">Connect your free OMDb API key to start searching.</span>
+    <button type="button" id="toggleKeyForm">Set API key</button>
+    <div class="key-form" id="keyForm">
+      <input type="text" id="apiKeyInput" placeholder="Paste your OMDb API key">
+      <button type="button" id="saveKeyBtn">Save</button>
+    </div>
+    <div style="margin-top:6px;">Get a free key at <a href="https://www.omdbapi.com/apikey.aspx" target="_blank" rel="noopener">omdbapi.com/apikey.aspx</a> — it's instant and email-verified.</div>
+  </div>
+
+  <main>
+    <div id="resultsMeta" class="results-meta" style="display:none;"></div>
+    <div id="grid" class="grid"></div>
+    <div id="statusArea"></div>
+  </main>
+
+  <footer>
+    CineFind is a personal project · Data and posters courtesy of OMDb API
+  </footer>
+
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal" id="modalBox"></div>
+  </div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'cinefind_omdb_api_key';
+
+  const searchForm   = document.getElementById('searchForm');
+  const searchInput  = document.getElementById('searchInput');
+  const searchBtn    = document.getElementById('searchBtn');
+  const typeFilter   = document.getElementById('typeFilter');
+  const yearFilter   = document.getElementById('yearFilter');
+  const grid         = document.getElementById('grid');
+  const statusArea   = document.getElementById('statusArea');
+  const resultsMeta  = document.getElementById('resultsMeta');
+  const keySetup     = document.getElementById('keySetup');
+  const keyStatusText= document.getElementById('keyStatusText');
+  const toggleKeyForm= document.getElementById('toggleKeyForm');
+  const keyForm      = document.getElementById('keyForm');
+  const apiKeyInput  = document.getElementById('apiKeyInput');
+  const saveKeyBtn   = document.getElementById('saveKeyBtn');
+  const modalBackdrop= document.getElementById('modalBackdrop');
+  const modalBox     = document.getElementById('modalBox');
+
+  let apiKey = safeGet(STORAGE_KEY) || '';
+  refreshKeyUI();
+
+  function safeGet(k){
+    try{ return localStorage.getItem(k); }catch(e){ return null; }
+  }
+  function safeSet(k, v){
+    try{ localStorage.setItem(k, v); }catch(e){ /* storage unavailable, continue without persistence */ }
+  }
+
+  function refreshKeyUI(){
+    if(apiKey){
+      keyStatusText.textContent = 'OMDb API key connected.';
+      toggleKeyForm.textContent = 'Change key';
+    } else {
+      keyStatusText.textContent = "Connect your free OMDb API key to start searching.";
+      toggleKeyForm.textContent = 'Set API key';
+    }
+  }
+
+  toggleKeyForm.addEventListener('click', () => {
+    keyForm.classList.toggle('open');
+    if(keyForm.classList.contains('open')) apiKeyInput.focus();
+  });
+
+  saveKeyBtn.addEventListener('click', () => {
+    const val = apiKeyInput.value.trim();
+    if(!val) return;
+    apiKey = val;
+    safeSet(STORAGE_KEY, val);
+    refreshKeyUI();
+    keyForm.classList.remove('open');
+    apiKeyInput.value = '';
+  });
+
+  searchForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const q = searchInput.value.trim();
+    if(!q) return;
+    if(!apiKey){
+      keyForm.classList.add('open');
+      apiKeyInput.focus();
+      renderStatus('error', 'Add your OMDb API key above, then search again.');
+      return;
+    }
+    runSearch(q);
+  });
+
+  async function runSearch(query){
+    setLoading(true);
+    grid.innerHTML = '';
+    resultsMeta.style.display = 'none';
+    statusArea.innerHTML = '';
+    renderStatus('loading', 'Rolling the reels…');
+
+    try{
+      const params = new URLSearchParams({ apikey: apiKey, s: query });
+      if(typeFilter.value) params.set('type', typeFilter.value);
+      if(yearFilter.value) params.set('y', yearFilter.value);
+
+      const res = await fetch(`https://www.omdbapi.com/?${params.toString()}`);
+      const data = await res.json();
+
+      if(data.Response === 'False'){
+        statusArea.innerHTML = '';
+        if(String(data.Error || '').toLowerCase().includes('invalid api key')){
+          renderStatus('error', 'That API key was rejected. Double-check it and try again.');
+        } else {
+          renderStatus('empty', `No results for "${escapeHtml(query)}". Try a different title.`);
+        }
+        return;
+      }
+
+      statusArea.innerHTML = '';
+      resultsMeta.style.display = 'block';
+      resultsMeta.textContent = `${data.Search.length} of ${data.totalResults} results for "${query}"`;
+      renderGrid(data.Search);
+
+    }catch(err){
+      statusArea.innerHTML = '';
+      renderStatus('error', 'Something went wrong reaching OMDb. Check your connection and try again.');
+    }finally{
+      setLoading(false);
+    }
+  }
+
+  function setLoading(isLoading){
+    searchBtn.disabled = isLoading;
+    searchBtn.textContent = isLoading ? 'Searching…' : 'Search';
+  }
+
+  function renderStatus(kind, message){
+    let icon = '🎬';
+    let cls = '';
+    if(kind === 'loading'){ 
+      statusArea.innerHTML = `<div class="status"><div class="spinner"></div>${escapeHtml(message)}</div>`;
+      return;
+    }
+    if(kind === 'error'){ icon = '⚠️'; cls = 'error'; }
+    if(kind === 'empty'){ icon = '🔍'; }
+    statusArea.innerHTML = `<div class="status ${cls}"><span class="icon">${icon}</span>${escapeHtml(message)}</div>`;
+  }
+
+  function renderGrid(items){
+    grid.innerHTML = items.map(item => {
+      const poster = (item.Poster && item.Poster !== 'N/A') ? item.Poster : null;
+      return `
+        <div class="card" tabindex="0" role="button" data-id="${item.imdbID}" aria-label="View details for ${escapeHtml(item.Title)}">
+          <div class="poster-wrap">
+            <div class="sprockets"></div>
+            ${poster
+              ? `<img src="${poster}" alt="${escapeHtml(item.Title)} poster" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'no-poster\\'>No poster available</div>'">`
+              : `<div class="no-poster">No poster available</div>`}
+          </div>
+          <div class="card-body">
+            <div class="card-title">${escapeHtml(item.Title)}</div>
+            <div class="card-meta">
+              <span>${escapeHtml(item.Year)}</span>
+              <span class="badge">${escapeHtml(item.Type)}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    grid.querySelectorAll('.card').forEach(card => {
+      card.addEventListener('click', () => openDetails(card.dataset.id));
+      card.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openDetails(card.dataset.id); }
+      });
+    });
+  }
+
+  async function openDetails(imdbID){
+    modalBox.innerHTML = `<div class="status"><div class="spinner"></div>Loading details…</div>`;
+    modalBackdrop.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    try{
+      const params = new URLSearchParams({ apikey: apiKey, i: imdbID, plot: 'full' });
+      const res = await fetch(`https://www.omdbapi.com/?${params.toString()}`);
+      const d = await res.json();
+
+      if(d.Response === 'False'){
+        modalBox.innerHTML = `<div class="status error"><span class="icon">⚠️</span>Couldn't load details for this title.</div>`;
+        return;
+      }
+
+      const poster = (d.Poster && d.Poster !== 'N/A') ? d.Poster : null;
+      const ratings = (d.Ratings || []).map(r => `
+        <div class="rating-chip">
+          <span class="src">${escapeHtml(r.Source)}</span>
+          <span class="val">${escapeHtml(r.Value)}</span>
+        </div>
+      `).join('');
+
+      modalBox.innerHTML = `
+        <button class="modal-close" id="modalCloseBtn" aria-label="Close">&times;</button>
+        <div class="modal-inner">
+          <div class="modal-poster">
+            ${poster ? `<img src="${poster}" alt="${escapeHtml(d.Title)} poster">` : `<div class="no-poster" style="height:100%;display:flex;align-items:center;justify-content:center;">No poster available</div>`}
+          </div>
+          <div class="modal-content">
+            <h2>${escapeHtml(d.Title)}</h2>
+            <div class="modal-sub">${escapeHtml(d.Year)} · ${escapeHtml(d.Rated)} · ${escapeHtml(d.Runtime)} · ${escapeHtml(d.Genre)}</div>
+            <p class="modal-plot">${escapeHtml(d.Plot)}</p>
+            <dl class="modal-facts">
+              <div><dt>Director</dt><dd>${escapeHtml(d.Director)}</dd></div>
+              <div><dt>Writer</dt><dd>${escapeHtml(d.Writer)}</dd></div>
+              <div><dt>Cast</dt><dd>${escapeHtml(d.Actors)}</dd></div>
+              <div><dt>Language</dt><dd>${escapeHtml(d.Language)}</dd></div>
+              <div><dt>Country</dt><dd>${escapeHtml(d.Country)}</dd></div>
+              <div><dt>Box Office</dt><dd>${escapeHtml(d.BoxOffice || 'N/A')}</dd></div>
+            </dl>
+            ${ratings ? `<div class="ratings-row">${ratings}</div>` : ''}
+          </div>
+        </div>
+      `;
+      document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+    }catch(err){
+      modalBox.innerHTML = `<div class="status error"><span class="icon">⚠️</span>Something went wrong loading this title.</div>`;
+    }
+  }
+
+  function closeModal(){
+    modalBackdrop.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  modalBackdrop.addEventListener('click', (e) => {
+    if(e.target === modalBackdrop) closeModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape' && modalBackdrop.classList.contains('open')) closeModal();
+  });
+
+  function escapeHtml(str){
+    if(str === undefined || str === null) return '';
+    return String(str)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  }
+  renderStatus('empty', 'Search for a title to begin — try "Interstellar" or "Breaking Bad".');
+})();
+</script>
+
+</body>
+</html>
